@@ -1,0 +1,7 @@
+def opamp(v1, v2, r1, r2=10000):
+    v1, v2, r1 ,r2 = float(v1), float(v2), float(r1), float(r2)
+    return (v1-v2)*(r1+r2)/r2 + v2
+
+cases = [[5, 5, 100], [3, 5, 100], [0, 5, 100], [10, 5, 10000], [7, 5, 10000], [5, 5, 10000], [3, 5, 10000], [0, 5, 10000]]
+for case in cases:
+    print opamp(case[0], case[1], case[2])
