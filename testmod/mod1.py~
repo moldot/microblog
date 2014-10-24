@@ -1,3 +1,0 @@
-from testmod import x
-
-x = [5,10]

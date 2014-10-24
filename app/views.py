@@ -1,12 +1,17 @@
 from app import app
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
-from .forms import LoginForm
+from .forms import *
 from app import app, db, lm, oid, models
+from datetime import datetime
 
 @app.before_request
 def before_request():
-    g.user = current_user 
+    g.user = current_user
+    if g.user.is_authenticated():
+        g.user.last_seen = datetime.utcnow()
+        db.session.add(g.user)
+        db.session.commit()
 
 @app.route('/')
 @app.route('/index')
@@ -29,7 +34,7 @@ def index():
                            title='Home',
                            user=user,
                            posts=posts)
-    
+
 @app.route('/login', methods=['GET', 'POST'])
 @oid.loginhandler
 def login():
@@ -50,6 +55,7 @@ def after_login(resp):
         flash('Invalid Login. Please try again.')
         return redirect(url_for('login'))
     user = models.User.query.filter_by(email=resp.email).first()
+
     if user is None:
         nickname = resp.nickname
         if nickname is None or nickname == '':
@@ -75,7 +81,7 @@ def logout():
 
 @app.route('/user/<nickname>')
 def user(nickname):
-    user = models.User.filter_by(nickname=nickname).first()
+    user = models.User.query.filter_by(nickname=nickname).first()
     if user is None:
         flash('User %s not found' % (nickname))
         return redirect(url_for('index'))
@@ -85,3 +91,26 @@ def user(nickname):
             ]
     return render_template('user.html', user=user, posts=posts)
 
+@app.route('/editprofile', methods=['GET', 'POST'])
+def edit_user():
+    form = EditUserForm()
+    if form.validate_on_submit():
+        g.user.nickname = form.nickname.data
+        g.user.about_me = form.about_me.data
+        db.session.add(g.user)
+        db.session.commit()
+        flash('Your changes are saved')
+        return redirect(url_for('edit_user'))
+    else:
+        form.nickname.data = g.user.nickname
+        form.about_me.data = g.user.about_me
+        return render_template('edit.html', form=form)
+
+@app.errorhandler(404)
+def error_not_found(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def error_internal(error):
+    db.session.rollback()
+    return render_template('505.html'), 500
