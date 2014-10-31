@@ -5,11 +5,9 @@ from migrate import *
 from migrate.changeset import schema
 pre_meta = MetaData()
 post_meta = MetaData()
-user = Table('user', post_meta,
-    Column('id', Integer, primary_key=True, nullable=False),
-    Column('name', String),
-    Column('email', String),
-    Column('testfield', Integer),
+followers = Table('followers', post_meta,
+    Column('follower_id', Integer),
+    Column('followed_id', Integer),
 )
 
 
@@ -18,11 +16,11 @@ def upgrade(migrate_engine):
     # migrate_engine to your metadata
     pre_meta.bind = migrate_engine
     post_meta.bind = migrate_engine
-    post_meta.tables['user'].columns['testfield'].create()
+    post_meta.tables['followers'].create()
 
 
 def downgrade(migrate_engine):
     # Operations to reverse the above upgrade go here.
     pre_meta.bind = migrate_engine
     post_meta.bind = migrate_engine
-    post_meta.tables['user'].columns['testfield'].drop()
+    post_meta.tables['followers'].drop()

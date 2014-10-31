@@ -1,4 +1,3 @@
-from app import app
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from .forms import *
@@ -60,6 +59,7 @@ def after_login(resp):
         nickname = resp.nickname
         if nickname is None or nickname == '':
             nickname = resp.email.split('@')[0]
+        nickname = User.make_unique_nickname(nickname)
         user = models.User(nickname=nickname, email=resp.email)
         db.session.add(user)
         db.session.commit()
@@ -93,7 +93,7 @@ def user(nickname):
 
 @app.route('/editprofile', methods=['GET', 'POST'])
 def edit_user():
-    form = EditUserForm()
+    form = EditUserForm(g.user.nickname)
     if form.validate_on_submit():
         g.user.nickname = form.nickname.data
         g.user.about_me = form.about_me.data
